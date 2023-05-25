@@ -1,4 +1,4 @@
-# EmbodiedGPT [[Paper](https://arxiv.org/pdf/2305.15021.pdf)] 
+# EmbodiedGPT 
 
 
 <!-- ## Description -->
