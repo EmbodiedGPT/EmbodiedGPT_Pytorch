@@ -20,7 +20,7 @@ Embodied AI is a crucial frontier in robotics, capable of planning and executing
 ![Example Image](https://github.com/EmbodiedGPT/EmbodiedGPT_Pytorch/blob/main/assest/overall_frame_embodiedgpt.png)
 
 ## 🎁 Major Features 
-<img width="800" alt="image" src="https://github.com/OpenGVLab/VisionLLM/assets/23737120/e825d53e-e282-4d6a-a1b3-7efb0dfa3613">
+<img width="800" alt="image" src="https://github.com/EmbodiedGPT/EmbodiedGPT_Pytorch/blob/main/assest/overall_frame_embodiedgpt.png">
 
 ## 🎫 License
 
