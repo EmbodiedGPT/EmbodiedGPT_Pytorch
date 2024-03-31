@@ -1,0 +1,5 @@
+datasets
+torchvision 
+decord 
+peft 
+deepspeed
