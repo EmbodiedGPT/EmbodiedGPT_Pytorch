@@ -9,8 +9,8 @@ from torch.utils.data import Dataset
 import torchvision.transforms as T
 from torchvision.transforms.functional import InterpolationMode
 
-from husky.train.tcsloader import TCSLoader
-from husky.conversation import get_conv_template
+from robohusky.train.tcsloader import TCSLoader
+from robohusky.conversation import get_conv_template
 
 IGNORE_INDEX = -100
 

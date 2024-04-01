@@ -22,14 +22,14 @@ from transformers import (
     StoppingCriteriaList,
 )
 
-from husky.model.modeling_husky_embody2 import HuskyForConditionalGeneration
+from robohusky.model.modeling_husky_embody2 import HuskyForConditionalGeneration
 
-from husky.conversation import (
+from robohusky.conversation import (
     conv_templates,
     get_conv_template,
 )
 
-from husky.video_transformers import (
+from robohusky.video_transformers import (
     GroupNormalize,
     GroupScale,
     GroupCenterCrop,
@@ -38,7 +38,7 @@ from husky.video_transformers import (
     get_index,
 )
 
-from husky.compression import compress_module
+from robohusky.compression import compress_module
 from decord import VideoReader, cpu
 
 # import deepspeed

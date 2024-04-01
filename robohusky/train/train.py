@@ -31,8 +31,8 @@ from dataclasses import dataclass, field
 from torch.utils.data import Dataset, ConcatDataset
 from datasets import load_dataset, load_from_disk
 
-from husky.dist_utils import init_dist
-from husky.model.modeling_husky_embody2 import HuskyForConditionalGeneration
+from robohusky.dist_utils import init_dist
+from robohusky.model.modeling_husky_embody2 import HuskyForConditionalGeneration
 
 import transformers
 from transformers import (
@@ -51,7 +51,7 @@ from peft import (
     prepare_model_for_int8_training,
 )
 
-from husky.base_dataset import (
+from robohusky.base_dataset import (
     process_func,
     BaseDataset,
     CephDataset,
@@ -68,11 +68,11 @@ from transformers.utils.logging import (
     enable_default_handler,
     enable_explicit_format,
 )
-from husky.train.llama2_flash_attn_monkey_patch import (
+from robohusky.train.llama2_flash_attn_monkey_patch import (
     replace_llama_attn_with_flash_attn
 )
 
-from husky.train.llama_rmsnorm_monkey_patch import (
+from robohusky.train.llama_rmsnorm_monkey_patch import (
     replace_llama_rmsnorm_with_fused_rmsnorm
 )
 

@@ -137,7 +137,7 @@ def replace_llama_attn_with_flash_attn():
     LlamaAttention.forward = forward
 
 def test():
-    from husky.train.llama_flash_attn_monkey_patch import forward as fastchat_forward
+    from robohusky.train.llama_flash_attn_monkey_patch import forward as fastchat_forward
     from transformers.models.llama.configuration_llama import LlamaConfig
 
     config = LlamaConfig(
