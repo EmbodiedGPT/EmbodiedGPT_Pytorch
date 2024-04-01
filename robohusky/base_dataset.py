@@ -188,7 +188,7 @@ class CephDataset(Dataset):
         self.transform = build_transform(input_size)
         self.husky_processor = processor
 
-        conf_path = "/mnt/petrelfs/zhangqinglong/Documents/Husky/datasets/petrelf.conf"
+        conf_path = "./petrelf.conf"
         self.conf_path = os.path.abspath(conf_path)
 
         self.initialized = False
