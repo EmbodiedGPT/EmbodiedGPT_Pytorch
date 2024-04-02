@@ -68,7 +68,7 @@ from transformers.utils.logging import (
     enable_default_handler,
     enable_explicit_format,
 )
-from robohusky.train.llama2_flash_attn_monkey_patch import (
+from robohusky.train.llama_flash_attn_monkey_patch import (
     replace_llama_attn_with_flash_attn
 )
 

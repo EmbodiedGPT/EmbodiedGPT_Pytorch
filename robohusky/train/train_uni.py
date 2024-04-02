@@ -28,12 +28,11 @@ from multiprocessing import cpu_count
 from typing import Optional
 from dataclasses import dataclass, field
 
-import torch
 from torch.utils.data import Dataset, ConcatDataset
 from datasets import load_dataset, load_from_disk
 
 from robohusky.dist_utils import init_dist
-from robohusky.model.modeling_husky_vidlm2 import HuskyForCausalLM
+from robohusky.model.modeling_husky_embody2 import HuskyForConditionalGeneration
 
 import transformers
 from transformers import (
@@ -49,6 +48,7 @@ from transformers import (
 from peft import (
     LoraConfig,
     get_peft_model,
+    prepare_model_for_int8_training,
 )
 
 from robohusky.base_dataset_uni import (
@@ -67,16 +67,24 @@ from transformers.utils.logging import (
     enable_default_handler,
     enable_explicit_format,
 )
-from robohusky.utils import replace_train_sampler
+from robohusky.train.llama_flash_attn_monkey_patch import (
+    replace_llama_attn_with_flash_attn
+)
+
 from robohusky.train.llama_rmsnorm_monkey_patch import (
     replace_llama_rmsnorm_with_fused_rmsnorm
 )
 
-replace_train_sampler()
+replace_llama_attn_with_flash_attn()
 replace_llama_rmsnorm_with_fused_rmsnorm()
 
 IGNORE_INDEX = -100
 DEFAULT_UNK_TOKEN = "<unk>"
+DEFAULT_IMG_START_TOKEN = "<img>"
+DEFAULT_IMG_END_TOKEN = "</img>"
+
+DEFAULT_VIDEO_START_TOKEN = "<vid>"
+DEFAULT_VIDEO_END_TOKEN = "</vid>"
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.32.0.dev0")
@@ -85,6 +93,7 @@ require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/tran
 warnings.filterwarnings('ignore')
 logger = logging.getLogger(__name__)
 
+os.environ["WANDB_DISABLED"] = "true"
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
 @dataclass
@@ -131,9 +140,9 @@ class ModelArguments:
         default=False,
         metadata={"help": "Will enable to load a pretrained vision model whose head dimensions are different."},
     )
-    freeze_video_model: bool = field(
+    freeze_vision_adapter: bool = field(
         default=False,
-        metadata={"help": "Will enable to load a pretrained video model whose head dimensions are different."},
+        metadata={"help": "Will enable to load a pretrained vision adapter whose head dimensions are different."},
     )
     freeze_text_model: bool = field(
         default=False,
@@ -142,6 +151,14 @@ class ModelArguments:
     freeze_qformer: bool = field(
         default=False,
         metadata={"help": "Will enable to load a pretrained qformer model whose head dimensions are different."},
+    )
+    un_freeze_vision_embedding: bool = field(
+        default=False,
+        metadata={"help": "Will enable to tuning image patch_embedding when vision_model are frozen"},
+    )
+    un_freeze_video_embedding: bool = field(
+        default=False,
+        metadata={"help": "Will enable to tuning video patch_embedding when vision_model are frozen"},
     )
     un_freeze_llm_head: bool = field(
         default=False,
@@ -192,10 +209,6 @@ class DataTrainingArguments:
         default=224,
         metadata={"help": "The input size of images."},
     )
-    video_size: Optional[int] = field(
-        default=224,
-        metadata={"help": "The input size of video."},
-    )
     overwrite_cache: bool = field(
         default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
     )
@@ -204,7 +217,7 @@ class DataTrainingArguments:
         metadata={"help": "The number of processes to use for the preprocessing."},
     )
     max_seq_length: Optional[int] = field(
-        default=-1,
+        default=128,
         metadata={
             "help": (
                 "The maximum total input sequence length after tokenization. Sequences longer "
@@ -312,22 +325,11 @@ class DataTrainingArguments:
                 extension = self.test_file.split(".")[-1]
                 assert extension == "json", "`test_file` should be a json file."
 
-@dataclass
-class TrainingArguments(transformers.TrainingArguments):
-    use_sequential_sampler: bool = field(
-        default=False,
-        metadata={
-            "help": (
-                "Whether to use SequentialSampler, support to collect all indices in a mini-batch from one dataset"
-            )
-        },
-    )
-
 def main():
     # 1. Parse input arguments
     # See all possible arguments in src/transformers/training_args.py
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
-    init_dist(launcher='slurm', backend='nccl', port=29502)
+    init_dist(launcher='slurm', backend='nccl', port=29598)
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script, and it's the path to a json file,
         # let's parse it to get our arguments.
@@ -374,7 +376,7 @@ def main():
                 "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
             )
 
-    # Set seed before initializing the model.
+    # Set seed before initializing model.
     set_seed(training_args.seed)
 
     # 4. Get the datasets
@@ -428,19 +430,26 @@ def main():
     if tokenizer.unk_token is None:
         tokenizer.add_special_tokens({"unk_token": DEFAULT_UNK_TOKEN})
 
-    model = HuskyForCausalLM.from_pretrained(
-        model_args.model_name_or_path,
-        attn_implementation="flash_attention_2",
-        torch_dtype=torch.bfloat16,
-        device_map='cuda',
+    tokens_list = [
+        DEFAULT_IMG_START_TOKEN, DEFAULT_IMG_END_TOKEN,
+        DEFAULT_VIDEO_START_TOKEN, DEFAULT_VIDEO_END_TOKEN
+    ]
+    tokenizer.add_tokens(tokens_list, special_tokens=True)
+
+    model = HuskyForConditionalGeneration.from_pretrained(
+        model_args.model_name_or_path, ignore_mismatched_sizes=True
     )
+    embedding_size = model.language_model.get_input_embeddings().weight.shape[0]
+
+    # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
+    # on a small vocab and want a smaller embedding size, remove this test.
+
+    if len(tokenizer) > embedding_size:
+        model.resize_token_embeddings(len(tokenizer))
+        model.language_model.resize_token_embeddings(len(tokenizer))
+    model.config.text_config.vocab_size = len(tokenizer)
 
     model.config.use_cache = False
-    num_query_tokens = model.config.num_query_tokens
-
-    logger.info(
-        f"query token numbers of qformer: {num_query_tokens}. "
-    )
 
     def _freeze_params(module):
         for param in module.parameters():
@@ -452,12 +461,11 @@ def main():
         model.language_projection.weight.requires_grad = True
 
     if model_args.freeze_vision_model:
-        # model.vision_model = model.vision_model.eval()
+        model.vision_model = model.vision_model.eval()
         _freeze_params(model.vision_model)
 
-    if model_args.freeze_video_model:
-        # model.video_model = model.video_model.eval()
-        _freeze_params(model.video_model)
+    if model_args.freeze_vision_adapter:
+        _freeze_params(model.vision_adapter)
 
     if model_args.freeze_qformer:
         model.qformer = model.qformer.eval()
@@ -465,7 +473,6 @@ def main():
         model.query_tokens.requires_grad = False
 
     if model_args.freeze_text_model:
-        # model.language_model = model.language_model.eval()
         _freeze_params(model.language_model)
 
     if model_args.use_lora:
@@ -482,6 +489,12 @@ def main():
         model.language_model = get_peft_model(model.language_model, lora_config)
         model.language_model.print_trainable_parameters()
 
+    if model_args.un_freeze_video_embedding:
+        _freeze_params(model)
+        model.vision_model.video_embeddings.patch_embedding.weight.requires_grad = True
+        model.vision_model.video_embeddings.class_embedding.requires_grad = True
+        model.vision_model.video_embeddings.position_embedding.requires_grad = True
+
     if model_args.un_freeze_llm_head:
         model.language_model.lm_head.weight.requires_grad = True
 
@@ -493,18 +506,12 @@ def main():
 
     # set padding.
     padding = "max_length" if data_args.pad_to_max_length else False
-    conv_tempt = data_args.conv_style if data_args.conv_style is not None else "husky"
-    logger.info(
-        f"Using conv template: {conv_tempt}. "
-    )
 
     def husky_processor(examples):
         processor = partial(
             process_func,
             tokenizer=tokenizer,
             max_seq_length=data_args.max_seq_length,
-            conv_tempt=conv_tempt,
-            num_query_tokens=num_query_tokens,
         )
         model_inputs = processor(examples)
         return model_inputs
@@ -518,12 +525,11 @@ def main():
             tokenizer,
             model=model,
             label_pad_token_id=label_pad_token_id,
-            pad_to_multiple_of=8 if (training_args.fp16 or training_args.bf16) else None,
+            pad_to_multiple_of=8 if training_args.fp16 else None,
         )
 
     concat_dataset = []
     weights = []
-    # max_train_sample = 606715
     batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps * training_args.world_size
     for data in ds:
         data_name = data['data_name']
@@ -559,6 +565,7 @@ def main():
     else:
         train_dataset = concat_dataset[0]
 
+
     # 8. Initialize our Trainer
     trainer = Trainer(
         model=model,
@@ -577,14 +584,16 @@ def main():
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
-        model.config.use_cache = True
-        trainer.save_model()  # Saves the tokenizer too for easy upload
+        if model_args.use_lora:
+            model.language_model.save_pretrained(training_args.output_dir)
+        else:
+            trainer.save_model()  # Saves the tokenizer too for easy upload
 
         metrics = train_result.metrics
         max_train_samples = (
-            data_args.max_train_samples if data_args.max_train_samples is not None else -1
+            data_args.max_train_samples if data_args.max_train_samples is not None else len(train_dataset)
         )
-        metrics["train_samples"] = max_train_samples
+        metrics["train_samples"] = min(max_train_samples, len(train_dataset))
 
         trainer.log_metrics("train", metrics)
         trainer.save_metrics("train", metrics)
