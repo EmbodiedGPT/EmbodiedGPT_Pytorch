@@ -1,0 +1,16 @@
+[
+  {
+    "data_name": "general_video_703k",
+    "text_file": "./datasets/mm/general_video_703K/chat_general_video_703k.jsonl",
+    "image_path": "your personal path",
+    "data_type": "video",
+    "size": 702971
+  },
+  {
+    "data_name": "ego_4d",
+    "text_file": "./datasets/mm/egocot/chat_ego4d_cot.jsonl",
+    "image_path": "your personal path",
+    "data_type": "numpy",
+    "size": 317528
+  }
+]
