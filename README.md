@@ -1,7 +1,7 @@
 # Embodied Family Code Base
 We will update the instruction of this codebase as soon as possible.
 
-[Download the test model](https://drive.google.com/file/d/1sBTy8oXeweJg3STbhzBR_5pLcVs1F20q/view?usp=sharing)
+Download the testing model[Embodied_family_7btiny](https://drive.google.com/file/d/1sBTy8oXeweJg3STbhzBR_5pLcVs1F20q/view?usp=sharing)
 
 <!-- ## Description -->
 
