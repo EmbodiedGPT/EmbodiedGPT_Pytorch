@@ -21,7 +21,7 @@ srun -p ${PARTITION} \
   --kill-on-bad-exit=1 \
   --quotatype=${QUOTA_TYPE} \
   ${SRUN_ARGS} \
-  python -u ./embodied_family/robohusky/train/train_uni.py\
+  python -u ./embodied_family/robohusky/train/train.py\
   --model_name_or_path "your path" \
   --cache_dir "/your path to cache"\
   --conv_style "husky" \
