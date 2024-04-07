@@ -4,7 +4,7 @@ We will update the instructions for this codebase as soon as possible.
 
 ## Installation
 
-See [INSTALLATION.md](https://github.com/EmbodiedGPT/EmbodiedGPT_Pytorch/INSTALLATION.md)
+See [INSTALLATION.md](https://github.com/EmbodiedGPT/EmbodiedGPT_Pytorch/blob/main/INSTALLATION.md)
 
 ## Data Preparation
 
