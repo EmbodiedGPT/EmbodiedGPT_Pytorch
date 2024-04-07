@@ -1,5 +1,7 @@
 datasets
+torch
 torchvision 
 decord 
 peft 
 deepspeed
+transformers

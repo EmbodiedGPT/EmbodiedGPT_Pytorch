@@ -2,6 +2,10 @@
 
 We will update the instructions for this codebase as soon as possible.
 
+## Installation
+
+See [INSTALLATION.md](https://github.com/EmbodiedGPT/EmbodiedGPT_Pytorch/INSTALLATION.md)
+
 ## Data Preparation
 
 1. Download the [EgoCOT dataset](https://github.com/EmbodiedGPT/EgoCOT_Dataset).
@@ -9,26 +13,31 @@ We will update the instructions for this codebase as soon as possible.
 
 ## Download the Pretrained Model
 
-Download the testing model [Embodied_family_7btiny](https://drive.google.com/file/d/1sBTy8oXeweJg3STbhzBR_5pLcVs1F20q/view?usp=sharing).
+Download the testing
+model [Embodied_family_7btiny](https://drive.google.com/file/d/1sBTy8oXeweJg3STbhzBR_5pLcVs1F20q/view?usp=sharing).
 
 ## Prepare the Text Data Paired with Video and Image
 
 - Unzip `datasets_share.zip`, which contains the text part of the multi-modal dataset, to the `./datasets/` directory.
 
-
 ## 🏠 Overview
+
 <img width="800" alt="image" src="https://github.com/EmbodiedGPT/EmbodiedGPT_Pytorch/blob/main/assest/overall_frame_embodiedgpt.png">
 
-## 🎁 Major Features 
+## 🎁 Major Features
+
 <img width="800" alt="image" src="https://github.com/EmbodiedGPT/EmbodiedGPT_Pytorch/blob/main/assest/main_features_embodiedgpt.png">
 
 ## Usage
 
-This repo can be used in conjunction with PyTorch's `Dataset` and `DataLoader` for training models on heterogeneous data. Here's a brief overview of the classes and their functionalities:
+This repo can be used in conjunction with PyTorch's `Dataset` and `DataLoader` for training models on heterogeneous
+data. Here's a brief overview of the classes and their functionalities:
 
 ### BaseDataset
 
-The `BaseDataset` class extends PyTorch's `Dataset` and is designed to handle different media types (images, videos, and text). It includes a transformation process to standardize the input data and a processor to handle the data specific to the task.
+The `BaseDataset` class extends PyTorch's `Dataset` and is designed to handle different media types (images, videos, and
+text). It includes a transformation process to standardize the input data and a processor to handle the data specific to
+the task.
 
 #### Example
 
@@ -54,7 +63,8 @@ data_loader = DataLoader(dataset, batch_size=32, shuffle=True)
 
 ### WeightedConcatDataset
 
-The `WeightedConcatDataset` class extends PyTorch's `ConcatDataset` and allows for the creation of a unified dataset by concatenating multiple datasets with specified weights.
+The `WeightedConcatDataset` class extends PyTorch's `ConcatDataset` and allows for the creation of a unified dataset by
+concatenating multiple datasets with specified weights.
 
 #### Example
 
@@ -78,11 +88,12 @@ data_loader = DataLoader(weighted_dataset, batch_size=32, shuffle=True)
 
 ## Customization
 
-The package is designed to be flexible and customizable. You can implement your own transformation and processing logic by subclassing `BaseDataset` and overriding the necessary methods.
+The package is designed to be flexible and customizable. You can implement your own transformation and processing logic
+by subclassing `BaseDataset` and overriding the necessary methods.
 
 ## 🎫 License
 
-This project is released under the [Apache 2.0 license](LICENSE). 
+This project is released under the [Apache 2.0 license](LICENSE).
 
 ## 🖊️ Citation
 
