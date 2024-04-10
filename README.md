@@ -98,3 +98,12 @@ This project is released under the [Apache 2.0 license](LICENSE).
 ## 🖊️ Citation
 
 If you find this project useful in your research, please consider cite:
+```bibtex
+@article{mu2024embodiedgpt,
+  title={Embodiedgpt: Vision-language pre-training via embodied chain of thought},
+  author={Mu, Yao and Zhang, Qinglong and Hu, Mengkang and Wang, Wenhai and Ding, Mingyu and Jin, Jun and Wang, Bin and Dai, Jifeng and Qiao, Yu and Luo, Ping},
+  journal={Advances in Neural Information Processing Systems},
+  volume={36},
+  year={2024}
+}
+```
