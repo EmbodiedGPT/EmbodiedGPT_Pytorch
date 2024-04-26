@@ -14,7 +14,7 @@ See [INSTALLATION.md](https://github.com/EmbodiedGPT/EmbodiedGPT_Pytorch/blob/ma
 ## Download the Pretrained Model
 
 Download the testing
-model [Embodied_family_7btiny](https://drive.google.com/file/d/1sBTy8oXeweJg3STbhzBR_5pLcVs1F20q/view?usp=sharing).
+model [Embodied_family_7btiny](https://huggingface.co/Liang-ZX/joint_video3/tree/main).
 
 ## Prepare the Text Data Paired with Video and Image
 
